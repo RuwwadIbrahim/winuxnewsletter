@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <title>View PDF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  
+
   <!-- Favicon -->
   <link rel="shortcut icon" href="images/KPK_Logo.svg">
-  
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/flipbook.style.css">
   <link rel="stylesheet" href="css/font-awesome.css">
-  
+
   <!-- jQuery -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
@@ -31,7 +32,7 @@
 
         // Button Options
         btnShare: { enabled: false },
-        btnPrint: { hideOnMobile: true },
+        btnPrint: { hideOnMobile: true, hAlign: "left" },
         btnDownloadPages: {
           enabled: true,
           title: "Download pages",
@@ -39,15 +40,21 @@
           icon2: "file_download",
           url: "pdf/pdf.pdf",
           name: "book.pdf",
-          hideOnMobile: false
+          hideOnMobile: true,
+          hAlign: "left"
         },
-        btnColor: 'rgb(255,120,60)',
-        sideBtnColor: 'rgb(255,120,60)',
+        btnDownloadPdf: { hAlign: "left", hideOnMobile: true },
+        btnColor: 'rgb(27, 154, 170)',
+        sideBtnColor: 'rgb(27, 154, 170)',
         sideBtnSize: 60,
         sideBtnBackground: "rgba(0,0,0,.7)",
         sideBtnRadius: 60,
-        btnSound: { vAlign: "top", hAlign: "left" },
-        btnAutoplay: { vAlign: "top", hAlign: "left" },
+        btnSound: { vAlign: "top", hAlign: "left", hideOnMobile: true },
+        btnAutoplay: { vAlign: "top", hAlign: "left", hideOnMobile: true },
+        btnZoomIn: { vAlign: "bottom", hideOnMobile: false },
+        btnZoomOut: { vAlign: "bottom", hideOnMobile: false },
+        btnExpand: { vAlign: "bottom", hideOnMobile: false },
+        btnThumbs: { enabled: false },
 
         // Sharing
         facebook: { enabled: false },
@@ -60,14 +67,274 @@
   </script>
 
   <style>
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
       padding: 0;
       background-color: #f6f6f6;
     }
+
+    .logo-overlay {
+      position: fixed;
+      top: 4px;
+      right: 60px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-overlay img {
+      height: 50px;
+      width: auto;
+      display: block;
+    }
+
+    /* Mobile hamburger menu */
+    .mobile-menu-btn {
+      display: none;
+      position: fixed;
+      top: 8px;
+      left: 10px;
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.6);
+      border: none;
+      color: white;
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .mobile-menu-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9998;
+    }
+
+    .mobile-menu-panel {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 260px;
+      height: 100%;
+      background: rgba(30, 30, 30, 0.95);
+      z-index: 10001;
+      flex-direction: column;
+      padding: 60px 20px 20px;
+      box-sizing: border-box;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .mobile-menu-panel.open {
+      transform: translateX(0);
+    }
+
+    .mobile-menu-panel a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.2s;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    .mobile-menu-panel a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu-panel a i {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+      color: rgb(27, 154, 170);
+    }
+
+    .mobile-menu-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .mobile-menu-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu-section {
+      color: rgb(27, 154, 170);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 16px 16px 6px;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 4px;
+    }
+
+    .mobile-menu-section:first-of-type {
+      border-top: none;
+      margin-top: 0;
+      padding-top: 4px;
+    }
+
+    /* ===== Mobile Header Bar ===== */
+    .mobile-header {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: #f6f6f6;
+      z-index: 10000;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .mobile-header-logo img {
+      height: 40px;
+      width: auto;
+      display: block;
+    }
+
+    .mobile-hamburger-btn {
+      background: transparent;
+      border: none;
+      color: rgb(27, 154, 170);
+      font-size: 26px;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .mobile-hamburger-btn:hover,
+    .mobile-hamburger-btn:active {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+
+      /* إظهار الهيدر والأزرار للموبايل */
+      .mobile-header {
+        display: flex;
+      }
+
+      /* إخفاء اللوجو العادي والهامبرجر القديم */
+      .logo-overlay,
+      .mobile-menu-btn {
+        display: none !important;
+      }
+
+      /* إخفاء القائمة العلوية للفليبوك على الموبايل */
+      .flipbook-menuTop {
+        display: none !important;
+      }
+
+      /* إضافة مساحة للهيدر */
+      .flipbook-main-wrapper,
+      .flipbook-wrapper {
+        top: 56px !important;
+      }
+    }
   </style>
 </head>
+
 <body>
+
+  <!-- Mobile Header Bar (visible on mobile only) -->
+  <header class="mobile-header">
+    <div class="mobile-header-logo">
+      <img src="images/logo ruwwad.png" alt="رواد التنمية">
+    </div>
+    <button class="mobile-hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+  </header>
+
+  <!-- Logo for desktop -->
+  <div class="logo-overlay">
+    <img src="images/logo ruwwad.png" alt="رواد التنمية">
+  </div>
+
+  <!-- Mobile Hamburger Menu Panel -->
+  <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+  <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+  <div class="mobile-menu-panel" id="mobileMenuPanel">
+    <button class="mobile-menu-close" onclick="toggleMobileMenu()">✕</button>
+
+    <div class="mobile-menu-section">الملفات</div>
+    <a href="pdf/pdf.pdf" download="book.pdf"><i class="fa fa-download"></i> تحميل الصفحات</a>
+    <a href="pdf/pdf.pdf" download="book.pdf"><i class="fa fa-file-pdf-o"></i> تحميل PDF</a>
+    <a href="#" onclick="window.print(); return false;"><i class="fa fa-print"></i> طباعة</a>
+
+    <div class="mobile-menu-section">تشغيل</div>
+    <a href="#" onclick="fbAutoplay(); return false;"><i class="fa fa-play"></i> تشغيل تلقائي</a>
+    <a href="#" onclick="fbSound(); return false;"><i class="fa fa-volume-up"></i> الصوت</a>
+  </div>
+
+  <script>
+    function toggleMobileMenu() {
+      var panel = document.getElementById('mobileMenuPanel');
+      var overlay = document.getElementById('mobileMenuOverlay');
+      var isOpen = panel.classList.contains('open');
+      if (isOpen) {
+        panel.classList.remove('open');
+        overlay.style.display = 'none';
+      } else {
+        panel.classList.add('open');
+        panel.style.display = 'flex';
+        overlay.style.display = 'block';
+      }
+    }
+    function closeMobileMenu() {
+      var panel = document.getElementById('mobileMenuPanel');
+      var overlay = document.getElementById('mobileMenuOverlay');
+      panel.classList.remove('open');
+      overlay.style.display = 'none';
+    }
+    function fbZoomIn() { try { $("body").data("flipBook").zoomIn(); } catch (e) { } closeMobileMenu(); }
+    function fbZoomOut() { try { $("body").data("flipBook").zoomOut(); } catch (e) { } closeMobileMenu(); }
+    function fbFullscreen() { try { $("body").data("flipBook").toggleExpand(); } catch (e) { } closeMobileMenu(); }
+    function fbThumbs() { try { $("body").data("flipBook").toggleThumbs(); } catch (e) { } closeMobileMenu(); }
+    function fbAutoplay() { try { $("body").data("flipBook").toggleAutoplay(); } catch (e) { } closeMobileMenu(); }
+    function fbSound() { try { $("body").data("flipBook").toggleSound(); } catch (e) { } closeMobileMenu(); }
+  </script>
 </body>
+
 </html>
